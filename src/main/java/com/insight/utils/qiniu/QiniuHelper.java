@@ -1,11 +1,13 @@
 package com.insight.utils.qiniu;
 
+import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
 import com.qiniu.common.Zone;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
 import com.qiniu.storage.Configuration;
 import com.qiniu.storage.UploadManager;
+import com.qiniu.storage.model.DefaultPutRet;
 import com.qiniu.storage.model.FileInfo;
 import com.qiniu.util.Auth;
 import org.apache.commons.io.IOUtils;
@@ -13,8 +15,10 @@ import org.apache.commons.io.IOUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.URLEncoder;
 
 /**
  * @author 作者
@@ -46,7 +50,7 @@ public final class QiniuHelper {
     }
 
     /**
-     * 上传
+     * 上传 路径上传
      *
      * @param path     上传路径
      * @param fileName 文件名
@@ -63,6 +67,23 @@ public final class QiniuHelper {
     }
 
     /**
+     * 上传 字节流上传
+     *
+     * @param data     上传字节流
+     * @param fileName 文件名
+     * @return 返回信息
+     */
+    public static Response upload(byte[] data, String fileName) {
+        try {
+            return uploadManager.put(data, fileName,  auth.uploadToken(bucketName));
+        } catch (QiniuException e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    /**
      * 下载
      *
      * @param fileName 文件名
@@ -70,7 +91,13 @@ public final class QiniuHelper {
      */
     @Deprecated
     public static String downLoad(String fileName) {
-        return publicURi + fileName;
+        try {
+            String encodedFileName = URLEncoder.encode(fileName, "utf-8");
+            return  publicURi+encodedFileName;
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /**
@@ -134,5 +161,23 @@ public final class QiniuHelper {
         } catch (QiniuException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 上传并下载接口，返回下载地址信息
+     *
+     * @param data
+     * @return 下载地址
+     */
+    public static String upAndDownload(byte[] data){
+        try {
+            Response response = QiniuHelper.upload(data,null);
+            //解析上传成功的结果
+            DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
+            return QiniuHelper.downLoad(putRet.hash);
+        } catch (QiniuException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }
