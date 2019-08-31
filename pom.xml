@@ -53,16 +53,15 @@
 			<artifactId>qiniu-java-sdk</artifactId>
 			<version>7.2.7</version>
 		</dependency>
-
 	</dependencies>
 
 	<distributionManagement>
 		<repository>
-			<id>release</id>
+			<id>local_release</id>
 			<url>http://localhost:8081/repository/maven-releases/</url>
 		</repository>
 		<snapshotRepository>
-			<id>snapshot</id>
+			<id>local_snapshot</id>
 			<url>http://localhost:8081/repository/maven-snapshots/</url>
 		</snapshotRepository>
 	</distributionManagement>
