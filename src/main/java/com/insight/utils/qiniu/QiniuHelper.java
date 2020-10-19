@@ -1,6 +1,5 @@
 package com.insight.utils.qiniu;
 
-import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
 import com.qiniu.common.Zone;
 import com.qiniu.http.Response;
@@ -10,15 +9,14 @@ import com.qiniu.storage.UploadManager;
 import com.qiniu.storage.model.DefaultPutRet;
 import com.qiniu.storage.model.FileInfo;
 import com.qiniu.util.Auth;
+import com.qiniu.util.Json;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URL;
-import java.net.URLEncoder;
 
 /**
  * @author 作者
@@ -60,37 +58,37 @@ public final class QiniuHelper {
      * @param fileName 文件名
      * @return 返回信息
      */
-    public static Response upload(String path, String fileName) throws QiniuException {
+    public static String upload(String path, String fileName) throws QiniuException {
         String token = getUploadToken(fileName);
+        Response response = UPLOAD_MANAGER.put(path, fileName, token);
+        DefaultPutRet result = Json.decode(response.bodyString(), DefaultPutRet.class);
 
-        return UPLOAD_MANAGER.put(path, fileName, token);
+        return qiniuUrl + result.hash;
     }
 
     /**
-     * 上传 字节流上传
-     *
-     * @param data     上传字节流
-     * @param fileName 文件名
-     * @return 返回信息
-     */
-    public static Response upload(byte[] data, String fileName) throws QiniuException {
-        String token = AUTH.uploadToken(bucketName);
-
-        return UPLOAD_MANAGER.put(data, fileName, token);
-    }
-
-    /**
-     * 上传并下载接口，返回下载地址信息
+     * 上传并返回下载地址信息
      *
      * @param data 文件字节数组
      * @return 下载地址
      */
-    public static String upAndDownload(byte[] data) throws QiniuException, UnsupportedEncodingException {
-        Response response = upload(data, null);
-        DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
-        String encodedFileName = URLEncoder.encode(putRet.hash, "utf-8");
+    public static String upload(byte[] data) throws QiniuException {
+        return upload(data, null);
+    }
 
-        return qiniuUrl + encodedFileName;
+    /**
+     * 上传并返回下载地址信息
+     *
+     * @param data     文件字节数组
+     * @param fileName 文件名
+     * @return 下载地址
+     */
+    public static String upload(byte[] data, String fileName) throws QiniuException {
+        String token = AUTH.uploadToken(fileName == null ? bucketName : fileName);
+        Response response = UPLOAD_MANAGER.put(data, fileName, token);
+        DefaultPutRet result = Json.decode(response.bodyString(), DefaultPutRet.class);
+
+        return qiniuUrl + result.hash;
     }
 
     /**
