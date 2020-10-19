@@ -61,7 +61,9 @@ public final class QiniuHelper {
      * @return 返回信息
      */
     public static Response upload(String path, String fileName) throws QiniuException {
-        return UPLOAD_MANAGER.put(path, fileName, getUploadToken(fileName));
+        String token = getUploadToken(fileName);
+
+        return UPLOAD_MANAGER.put(path, fileName, token);
     }
 
     /**
@@ -72,18 +74,21 @@ public final class QiniuHelper {
      * @return 返回信息
      */
     public static Response upload(byte[] data, String fileName) throws QiniuException {
-        return UPLOAD_MANAGER.put(data, fileName, AUTH.uploadToken(bucketName));
+        String token = AUTH.uploadToken(bucketName);
+
+        return UPLOAD_MANAGER.put(data, fileName, token);
     }
 
     /**
-     * 下载
+     * 上传并下载接口，返回下载地址信息
      *
-     * @param fileName 文件名
-     * @return 下载URL
+     * @param data 文件字节数组
+     * @return 下载地址
      */
-    @Deprecated
-    public static String downLoad(String fileName) throws UnsupportedEncodingException {
-        String encodedFileName = URLEncoder.encode(fileName, "utf-8");
+    public static String upAndDownload(byte[] data) throws QiniuException, UnsupportedEncodingException {
+        Response response = upload(data, null);
+        DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
+        String encodedFileName = URLEncoder.encode(putRet.hash, "utf-8");
 
         return qiniuUrl + encodedFileName;
     }
@@ -127,24 +132,7 @@ public final class QiniuHelper {
      *
      * @param fileName 文件名
      */
-    public static void delete(String fileName) {
-        try {
-            BUCKET_MANAGER.delete(bucketName, fileName);
-        } catch (QiniuException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 上传并下载接口，返回下载地址信息
-     *
-     * @param data 文件字节数组
-     * @return 下载地址
-     */
-    public static String upAndDownload(byte[] data) throws QiniuException, UnsupportedEncodingException {
-        Response response = QiniuHelper.upload(data, null);
-        DefaultPutRet putRet = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
-
-        return QiniuHelper.downLoad(putRet.hash);
+    public static void delete(String fileName) throws QiniuException {
+        BUCKET_MANAGER.delete(bucketName, fileName);
     }
 }

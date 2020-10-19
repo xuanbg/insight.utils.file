@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.insight.utils</groupId>
 	<artifactId>qiniu</artifactId>
-	<version>1.0.0.release</version>
+	<version>1.0.0-RELEASE</version>
 	<name>qiniu</name>
 	<description>utils qiniu project for Spring Boot</description>
 
