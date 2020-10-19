@@ -11,7 +11,6 @@ import com.qiniu.storage.model.FileInfo;
 import com.qiniu.util.Auth;
 import com.qiniu.util.Json;
 import org.apache.commons.io.IOUtils;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -23,23 +22,26 @@ import java.net.URL;
  * @date 2017年9月5日
  * @remark 七牛存储服务
  */
-public final class QiniuHelper {
-    @Value("${qiniu.accessKey}")
-    private static String accessKey;
+public class QiniuHelper {
+    private final QiniuConfig config;
 
-    @Value("${qiniu.secretKey}")
-    private static String secretKey;
+    private final Auth auth;
+    private final UploadManager uploadManager;
+    private final BucketManager bucketManager;
 
-    @Value("${qiniu.bucketName}")
-    private static String bucketName;
-
-    @Value("${qiniu.url}")
-    private static String qiniuUrl;
-
-    private static final Auth AUTH = Auth.create(accessKey, secretKey);
-    private static final Configuration CONFIG = new Configuration(Zone.autoZone());
-    private static final UploadManager UPLOAD_MANAGER = new UploadManager(CONFIG);
-    private static final BucketManager BUCKET_MANAGER = new BucketManager(AUTH, CONFIG);
+    /**
+     * 构造方法
+     *
+     * @param config QiniuConfig
+     */
+    public QiniuHelper(QiniuConfig config) {
+        this.config = config;
+        
+        auth = Auth.create(config.accessKey, config.secretKey);
+        Configuration configuration = new Configuration(Zone.autoZone());
+        uploadManager = new UploadManager(configuration);
+        bucketManager = new BucketManager(auth, configuration);
+    }
 
     /**
      * 获取上传token
@@ -47,8 +49,8 @@ public final class QiniuHelper {
      * @param fileName 文件名
      * @return token
      */
-    public static String getUploadToken(String fileName) {
-        return AUTH.uploadToken(bucketName, fileName);
+    public String getUploadToken(String fileName) {
+        return auth.uploadToken(config.bucketName, fileName);
     }
 
     /**
@@ -58,12 +60,12 @@ public final class QiniuHelper {
      * @param fileName 文件名
      * @return 返回信息
      */
-    public static String upload(String path, String fileName) throws QiniuException {
+    public String upload(String path, String fileName) throws QiniuException {
         String token = getUploadToken(fileName);
-        Response response = UPLOAD_MANAGER.put(path, fileName, token);
+        Response response = uploadManager.put(path, fileName, token);
         DefaultPutRet result = Json.decode(response.bodyString(), DefaultPutRet.class);
 
-        return qiniuUrl + result.hash;
+        return config.qiniuUrl + result.hash;
     }
 
     /**
@@ -72,7 +74,7 @@ public final class QiniuHelper {
      * @param data 文件字节数组
      * @return 下载地址
      */
-    public static String upload(byte[] data) throws QiniuException {
+    public String upload(byte[] data) throws QiniuException {
         return upload(data, null);
     }
 
@@ -83,12 +85,12 @@ public final class QiniuHelper {
      * @param fileName 文件名
      * @return 下载地址
      */
-    public static String upload(byte[] data, String fileName) throws QiniuException {
-        String token = AUTH.uploadToken(fileName == null ? bucketName : fileName);
-        Response response = UPLOAD_MANAGER.put(data, fileName, token);
+    public String upload(byte[] data, String fileName) throws QiniuException {
+        String token = auth.uploadToken(fileName == null ? config.bucketName : fileName);
+        Response response = uploadManager.put(data, fileName, token);
         DefaultPutRet result = Json.decode(response.bodyString(), DefaultPutRet.class);
 
-        return qiniuUrl + result.hash;
+        return config.qiniuUrl + result.hash;
     }
 
     /**
@@ -97,10 +99,10 @@ public final class QiniuHelper {
      * @param fileName 文件名
      * @return 字节数组
      */
-    public static byte[] read(String fileName) throws IOException {
-        BUCKET_MANAGER.stat(bucketName, fileName);
+    public byte[] read(String fileName) throws IOException {
+        bucketManager.stat(config.bucketName, fileName);
 
-        String url = qiniuUrl + fileName;
+        String url = config.qiniuUrl + fileName;
         URL u = new URL(url);
         InputStream in = u.openStream();
         ByteArrayOutputStream output = new ByteArrayOutputStream();
@@ -119,8 +121,8 @@ public final class QiniuHelper {
      * @param fileName 文件名
      * @return 文件hash
      */
-    public static String info(String fileName) throws QiniuException {
-        FileInfo info = BUCKET_MANAGER.stat(bucketName, fileName);
+    public String info(String fileName) throws QiniuException {
+        FileInfo info = bucketManager.stat(config.bucketName, fileName);
 
         return info.hash;
     }
@@ -130,7 +132,7 @@ public final class QiniuHelper {
      *
      * @param fileName 文件名
      */
-    public static void delete(String fileName) throws QiniuException {
-        BUCKET_MANAGER.delete(bucketName, fileName);
+    public void delete(String fileName) throws QiniuException {
+        bucketManager.delete(config.bucketName, fileName);
     }
 }
