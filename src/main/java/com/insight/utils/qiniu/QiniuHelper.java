@@ -65,7 +65,7 @@ public class QiniuHelper {
         Response response = uploadManager.put(path, fileName, token);
         DefaultPutRet result = Json.decode(response.bodyString(), DefaultPutRet.class);
 
-        return config.qiniuUrl + result.hash;
+        return config.qiniuUrl + result.key;
     }
 
     /**
@@ -90,7 +90,7 @@ public class QiniuHelper {
         Response response = uploadManager.put(data, fileName, token);
         DefaultPutRet result = Json.decode(response.bodyString(), DefaultPutRet.class);
 
-        return config.qiniuUrl + result.hash;
+        return config.qiniuUrl + result.key;
     }
 
     /**
