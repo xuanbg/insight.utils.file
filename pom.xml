@@ -9,10 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.insight.utils</groupId>
-	<artifactId>qiniu</artifactId>
+	<artifactId>file</artifactId>
 	<version>1.0.0-RELEASE</version>
-	<name>qiniu</name>
-	<description>utils qiniu project for Spring Boot</description>
+	<name>file</name>
+	<description>Insight file utils project for Spring Boot</description>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -38,6 +38,16 @@
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-context</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi</artifactId>
+			<version>RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.poi</groupId>
+			<artifactId>poi-ooxml</artifactId>
+			<version>RELEASE</version>
 		</dependency>
 	</dependencies>
 
