@@ -1,2 +1,2 @@
-# insight.utils.qiniu
-insight.utils.qiniu
+# insight.utils.file
+insight.utils.file
