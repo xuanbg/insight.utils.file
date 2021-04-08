@@ -9,6 +9,7 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.text.NumberFormat;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -322,7 +323,7 @@ public class ExcelHelper {
      * @param <T>  泛型参数
      * @return 指定类型的集合
      */
-    public <T> List<T> importSheet(Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException {
+    public <T> List<T> importSheet(Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException, ParseException {
         return importSheet(0, type);
     }
 
@@ -334,7 +335,7 @@ public class ExcelHelper {
      * @param <T>        泛型参数
      * @return 指定类型的集合
      */
-    public <T> List<T> importSheet(int sheetIndex, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException {
+    public <T> List<T> importSheet(int sheetIndex, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException, ParseException {
         String name = workbook.getSheetName(sheetIndex);
 
         return importSheet(name, type);
@@ -348,7 +349,7 @@ public class ExcelHelper {
      * @param <T>       泛型参数
      * @return 指定类型的集合
      */
-    public <T> List<T> importSheet(String sheetName, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException {
+    public <T> List<T> importSheet(String sheetName, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException, ParseException {
         Sheet sheet = workbook.getSheet(sheetName);
 
         return toList(sheet, type);
@@ -534,7 +535,7 @@ public class ExcelHelper {
      * @param <T>   泛型参数
      * @return 指定类型的集合
      */
-    private <T> List<T> toList(Sheet sheet, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException {
+    private <T> List<T> toList(Sheet sheet, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException, ParseException {
         if (sheet == null || type == null) {
             return null;
         }
@@ -566,7 +567,7 @@ public class ExcelHelper {
      * @param row 输入的行数据
      * @return 指定类型的对象实体
      */
-    private <T> T readRow(Row row, Class<T> type) throws NoSuchFieldException, IllegalAccessException, InstantiationException {
+    private <T> T readRow(Row row, Class<T> type) throws NoSuchFieldException, IllegalAccessException, InstantiationException, ParseException {
         if (row == null) {
             return null;
         }
@@ -610,7 +611,7 @@ public class ExcelHelper {
      * @param type 对应字段数据类型
      * @return 单元格数据
      */
-    private Object readCell(Cell cell, String type) {
+    private Object readCell(Cell cell, String type) throws ParseException {
         if (cell == null) {
             return null;
         }
