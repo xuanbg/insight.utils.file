@@ -1,10 +1,11 @@
 package com.insight.utils.qiniu;
 
+import com.google.gson.Gson;
 import com.qiniu.common.QiniuException;
-import com.qiniu.common.Zone;
 import com.qiniu.http.Response;
 import com.qiniu.storage.BucketManager;
 import com.qiniu.storage.Configuration;
+import com.qiniu.storage.Region;
 import com.qiniu.storage.UploadManager;
 import com.qiniu.storage.model.DefaultPutRet;
 import com.qiniu.storage.model.FileInfo;
@@ -36,9 +37,9 @@ public class QiniuHelper {
      */
     public QiniuHelper(QiniuConfig config) {
         this.config = config;
-        
+
         auth = Auth.create(config.accessKey, config.secretKey);
-        Configuration configuration = new Configuration(Zone.autoZone());
+        Configuration configuration = new Configuration(Region.region0());
         uploadManager = new UploadManager(configuration);
         bucketManager = new BucketManager(auth, configuration);
     }
@@ -63,7 +64,7 @@ public class QiniuHelper {
     public String upload(String path, String fileName) throws QiniuException {
         String token = getUploadToken(fileName);
         Response response = uploadManager.put(path, fileName, token);
-        DefaultPutRet result = Json.decode(response.bodyString(), DefaultPutRet.class);
+        DefaultPutRet result = new Gson().fromJson(response.bodyString(), DefaultPutRet.class);
 
         return config.qiniuUrl + result.key;
     }
@@ -108,11 +109,7 @@ public class QiniuHelper {
         ByteArrayOutputStream output = new ByteArrayOutputStream();
 
         IOUtils.copy(in, output);
-        byte[] bytes = output.toByteArray();
-        IOUtils.closeQuietly(in);
-        IOUtils.closeQuietly(output);
-
-        return bytes;
+        return output.toByteArray();
     }
 
     /**
