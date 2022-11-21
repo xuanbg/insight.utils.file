@@ -10,7 +10,7 @@
 	</parent>
 	<groupId>com.insight.utils</groupId>
 	<artifactId>file</artifactId>
-	<version>1.0.0-RELEASE</version>
+	<version>2.0.0-RELEASE</version>
 	<name>file</name>
 	<description>Insight file utils project for Spring Boot</description>
 
