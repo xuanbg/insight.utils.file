@@ -5,9 +5,14 @@ import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Field;
 import java.math.BigDecimal;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.text.NumberFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -74,17 +79,15 @@ public class ExcelHelper {
      */
     public ExcelHelper(ExcelVer ver) {
         switch (ver) {
-            case XLS:
+            case XLS -> {
                 workbook = new HSSFWorkbook();
                 suffix = ".xls";
-                break;
-            case XLSX:
+            }
+            case XLSX -> {
                 workbook = new XSSFWorkbook();
                 suffix = ".xlsx";
-                break;
-            default:
-                workbook = null;
-                break;
+            }
+            default -> workbook = null;
         }
     }
 
@@ -94,7 +97,7 @@ public class ExcelHelper {
      * @param file 输入Excel文件(.xls|.xlsx)的路径
      */
     public ExcelHelper(String file) throws IOException {
-        this(new FileInputStream(file));
+        this(Files.newInputStream(Paths.get(file)));
     }
 
     /**
@@ -148,7 +151,6 @@ public class ExcelHelper {
      */
     public Boolean verifyColumns(int sheetIndex, String keys) {
         String sheetName = workbook.getSheetName(sheetIndex);
-
         return verifyColumns(sheetName, keys);
     }
 
@@ -191,7 +193,6 @@ public class ExcelHelper {
      */
     public Boolean verifyColumns(int sheetIndex, Class<?> type) {
         String sheetName = workbook.getSheetName(sheetIndex);
-
         return verifyColumns(sheetName, type);
     }
 
@@ -242,9 +243,8 @@ public class ExcelHelper {
         }
 
         String fileName = (path == null || path.isEmpty() ? "" : path + "/") + file + suffix;
-        OutputStream stream = new FileOutputStream(fileName);
+        OutputStream stream = Files.newOutputStream(Paths.get(fileName));
         workbook.write(stream);
-
         return fileName;
     }
 
@@ -257,7 +257,7 @@ public class ExcelHelper {
      * @param <T>  泛型参数
      * @return 文件名
      */
-    public <T> String exportFile(String path, String file, List<T> list) throws IOException, NoSuchFieldException, IllegalAccessException {
+    public <T> String exportFile(String path, String file, List<T> list) throws Exception {
         return exportFile(path, file, list, null);
     }
 
@@ -271,7 +271,7 @@ public class ExcelHelper {
      * @param <T>       泛型参数
      * @return 文件名
      */
-    public <T> String exportFile(String path, String file, List<T> list, String sheetName) throws IOException, NoSuchFieldException, IllegalAccessException {
+    public <T> String exportFile(String path, String file, List<T> list, String sheetName) throws Exception {
         createSheet(list, sheetName);
 
         return exportFile(path, file);
@@ -298,7 +298,7 @@ public class ExcelHelper {
      * @param <T>  泛型参数
      * @return 文件流
      */
-    public <T> OutputStream exportStream(List<T> list) throws IOException, NoSuchFieldException, IllegalAccessException {
+    public <T> OutputStream exportStream(List<T> list) throws Exception {
         return exportStream(list, null);
     }
 
@@ -310,9 +310,8 @@ public class ExcelHelper {
      * @param sheetName Sheet名称
      * @return 文件流
      */
-    public <T> OutputStream exportStream(List<T> list, String sheetName) throws IOException, NoSuchFieldException, IllegalAccessException {
+    public <T> OutputStream exportStream(List<T> list, String sheetName) throws Exception {
         createSheet(list, sheetName);
-
         return exportStream();
     }
 
@@ -323,7 +322,7 @@ public class ExcelHelper {
      * @param <T>  泛型参数
      * @return 指定类型的集合
      */
-    public <T> List<T> importSheet(Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException, ParseException {
+    public <T> List<T> importSheet(Class<T> type) throws Exception {
         return importSheet(0, type);
     }
 
@@ -335,9 +334,8 @@ public class ExcelHelper {
      * @param <T>        泛型参数
      * @return 指定类型的集合
      */
-    public <T> List<T> importSheet(int sheetIndex, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException, ParseException {
+    public <T> List<T> importSheet(int sheetIndex, Class<T> type) throws Exception {
         String name = workbook.getSheetName(sheetIndex);
-
         return importSheet(name, type);
     }
 
@@ -349,9 +347,8 @@ public class ExcelHelper {
      * @param <T>       泛型参数
      * @return 指定类型的集合
      */
-    public <T> List<T> importSheet(String sheetName, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException, ParseException {
+    public <T> List<T> importSheet(String sheetName, Class<T> type) throws Exception {
         Sheet sheet = workbook.getSheet(sheetName);
-
         return toList(sheet, type);
     }
 
@@ -386,7 +383,7 @@ public class ExcelHelper {
      * @param list 输入数据集合
      * @param <T>  泛型参数
      */
-    public <T> void createSheet(List<T> list) throws NoSuchFieldException, IllegalAccessException {
+    public <T> void createSheet(List<T> list) throws Exception {
         createSheet(list, null);
     }
 
@@ -397,7 +394,7 @@ public class ExcelHelper {
      * @param sheetName Sheet名称
      * @param <T>       泛型参数
      */
-    public <T> void createSheet(List<T> list, String sheetName) throws NoSuchFieldException, IllegalAccessException {
+    public <T> void createSheet(List<T> list, String sheetName) throws Exception {
         if (workbook == null || list == null || list.isEmpty()) {
             return;
         }
@@ -467,13 +464,9 @@ public class ExcelHelper {
 
             String val = value.toString();
             switch (cellType) {
-                case NUMERIC:
-                    cell.setCellValue(Double.parseDouble(val));
-                    break;
-                case BOOLEAN:
-                    cell.setCellValue(Boolean.parseBoolean(val));
-                    break;
-                default:
+                case NUMERIC -> cell.setCellValue(Double.parseDouble(val));
+                case BOOLEAN -> cell.setCellValue(Boolean.parseBoolean(val));
+                default -> {
                     switch (info.getTypeName()) {
                         case "Date":
                             SimpleDateFormat format = new SimpleDateFormat(info.getDateFormat());
@@ -492,7 +485,7 @@ public class ExcelHelper {
                             cell.setCellValue(val);
                             break;
                     }
-                    break;
+                }
             }
         }
     }
@@ -504,27 +497,11 @@ public class ExcelHelper {
      * @return 单元格格式
      */
     private CellType getCellType(String type) {
-        switch (type) {
-            case "int":
-            case "Integer":
-            case "long":
-            case "Long":
-            case "short":
-            case "Short":
-            case "byte":
-            case "Byte":
-            case "double":
-            case "Double":
-            case "float":
-            case "Float":
-            case "BigDecimal":
-                return CellType.NUMERIC;
-            case "boolean":
-            case "Boolean":
-                return CellType.BOOLEAN;
-            default:
-                return CellType.STRING;
-        }
+        return switch (type) {
+            case "int", "Integer", "long", "Long", "short", "Short", "byte", "Byte", "double", "Double", "float", "Float", "BigDecimal" -> CellType.NUMERIC;
+            case "boolean", "Boolean" -> CellType.BOOLEAN;
+            default -> CellType.STRING;
+        };
     }
 
     /**
@@ -535,7 +512,7 @@ public class ExcelHelper {
      * @param <T>   泛型参数
      * @return 指定类型的集合
      */
-    private <T> List<T> toList(Sheet sheet, Class<T> type) throws IllegalAccessException, InstantiationException, NoSuchFieldException, ParseException {
+    private <T> List<T> toList(Sheet sheet, Class<T> type) throws Exception {
         if (sheet == null || type == null) {
             return null;
         }
@@ -567,20 +544,20 @@ public class ExcelHelper {
      * @param row 输入的行数据
      * @return 指定类型的对象实体
      */
-    private <T> T readRow(Row row, Class<T> type) throws NoSuchFieldException, IllegalAccessException, InstantiationException, ParseException {
+    private <T> T readRow(Row row, Class<T> type) throws Exception {
         if (row == null) {
             return null;
         }
 
         // 顺序读取行内的每个单元格的数据并赋值给对应的字段
-        T item = type.newInstance();
+        T item = type.getDeclaredConstructor().newInstance();
         Integer nullCount = 0;
         for (int i = 0; i < title.size(); i++) {
             String colName = title.get(i);
 
             // 如当前单元格所在列未在指定类型中定义,则跳过该单元格
             Optional<FieldInfo> optional = fieldInfos.stream().filter(f -> colName.equals(f.getColumnName()) || colName.equals(f.getFiledName())).findFirst();
-            if (!optional.isPresent()) {
+            if (optional.isEmpty()) {
                 nullCount++;
                 continue;
             }
@@ -617,27 +594,30 @@ public class ExcelHelper {
         }
 
         switch (cell.getCellType()) {
-            case STRING:
+            case STRING -> {
                 String value = cell.getStringCellValue();
                 switch (type) {
-                    case "Date":
+                    case "Date" -> {
                         return DateHelper.dateFormat(value);
-                    case "boolean":
-                    case "Boolean":
+                    }
+                    case "boolean", "Boolean" -> {
                         return Boolean.valueOf(value);
-                    case "String":
+                    }
+                    case "String" -> {
                         return cell.getStringCellValue();
-                    default:
+                    }
+                    default -> {
                         double val;
                         try {
                             val = Double.parseDouble(value);
                         } catch (Exception ex) {
                             return null;
                         }
-
                         return numberFormat(val, type);
+                    }
                 }
-            case NUMERIC:
+            }
+            case NUMERIC -> {
                 if (type.matches("Date")) {
                     Date date = cell.getDateCellValue();
                     if (date == null) {
@@ -655,26 +635,22 @@ public class ExcelHelper {
 
                     return zone.toLocalDateTime();
                 }
-
                 return numberFormat(cell.getNumericCellValue(), type);
-            case FORMULA:
-                switch (type) {
-                    case "boolean":
-                    case "Boolean":
-                        return cell.getBooleanCellValue();
-                    case "Date":
-                    case "LocalDate":
-                    case "LocalDateTime":
-                        return cell.getDateCellValue();
-                    case "String":
-                        return cell.getStringCellValue();
-                    default:
-                        return numberFormat(cell.getNumericCellValue(), type);
-                }
-            case BOOLEAN:
+            }
+            case FORMULA -> {
+                return switch (type) {
+                    case "boolean", "Boolean" -> cell.getBooleanCellValue();
+                    case "Date", "LocalDate", "LocalDateTime" -> cell.getDateCellValue();
+                    case "String" -> cell.getStringCellValue();
+                    default -> numberFormat(cell.getNumericCellValue(), type);
+                };
+            }
+            case BOOLEAN -> {
                 return cell.getBooleanCellValue();
-            default:
+            }
+            default -> {
                 return null;
+            }
         }
     }
 
@@ -691,65 +667,27 @@ public class ExcelHelper {
             return;
         }
 
-        String val = value.toString();
+        String val = value.toString().trim();
         switch (field.getType().getSimpleName()) {
-            case "long":
-                field.setLong(item, Long.parseLong(val));
-                break;
-            case "int":
-                field.setInt(item, Integer.parseInt(val));
-                break;
-            case "short":
-                field.setShort(item, Short.parseShort(val));
-                break;
-            case "byte":
-                field.setByte(item, Byte.parseByte(val));
-                break;
-            case "double":
-                field.setDouble(item, Double.parseDouble(val));
-                break;
-            case "float":
-                field.setFloat(item, Float.parseFloat(val));
-                break;
-            case "boolean":
-                field.setBoolean(item, Boolean.parseBoolean(val));
-                break;
-            case "Integer":
-                field.set(item, Integer.valueOf(val));
-                break;
-            case "Short":
-                field.set(item, Short.valueOf(val));
-                break;
-            case "Byte":
-                field.set(item, Byte.valueOf(val));
-                break;
-            case "Double":
-                field.set(item, Double.valueOf(val));
-                break;
-            case "Float":
-                field.set(item, Float.valueOf(val));
-                break;
-            case "Boolean":
-                field.set(item, Boolean.valueOf(val));
-                break;
-            case "BigDecimal":
-                field.set(item, BigDecimal.valueOf(Double.parseDouble(val)));
-                break;
-            case "Date":
-                field.set(item, formatter.parse(val));
-                break;
-            case "LocalDate":
-                field.set(item, LocalDate.parse(val));
-                break;
-            case "LocalDateTime":
-                field.set(item, LocalDateTime.parse(val));
-                break;
-            case "String":
-                field.set(item, val);
-                break;
-            default:
-                field.set(item, value);
-                break;
+            case "long" -> field.setLong(item, Long.parseLong(val));
+            case "int" -> field.setInt(item, Integer.parseInt(val));
+            case "short" -> field.setShort(item, Short.parseShort(val));
+            case "byte" -> field.setByte(item, Byte.parseByte(val));
+            case "double" -> field.setDouble(item, Double.parseDouble(val));
+            case "float" -> field.setFloat(item, Float.parseFloat(val));
+            case "boolean" -> field.setBoolean(item, Boolean.parseBoolean(val));
+            case "Integer" -> field.set(item, Integer.valueOf(val));
+            case "Short" -> field.set(item, Short.valueOf(val));
+            case "Byte" -> field.set(item, Byte.valueOf(val));
+            case "Double" -> field.set(item, Double.valueOf(val));
+            case "Float" -> field.set(item, Float.valueOf(val));
+            case "Boolean" -> field.set(item, Boolean.valueOf(val));
+            case "BigDecimal" -> field.set(item, BigDecimal.valueOf(Double.parseDouble(val)));
+            case "Date" -> field.set(item, formatter.parse(val));
+            case "LocalDate" -> field.set(item, LocalDate.parse(val));
+            case "LocalDateTime" -> field.set(item, LocalDateTime.parse(val));
+            case "String" -> field.set(item, val);
+            default -> field.set(item, value);
         }
     }
 
